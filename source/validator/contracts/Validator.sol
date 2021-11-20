@@ -47,7 +47,7 @@ contract Validator is Ownable {
       )
     );
   // size of fixed array that holds max returning error messages
-  uint256 internal constant MAX_ERROR_COUNT = 8;
+  uint256 internal constant MAX_ERROR_COUNT = 6;
 
   constructor(address _lightAddress) Ownable() {
     light = _lightAddress;
@@ -129,33 +129,19 @@ contract Validator is Ownable {
       }
     }
     //accounts & balances check
-    uint256 senderBalance = IERC20(details.senderToken).balanceOf(
-      details.senderWallet
-    );
     uint256 signerBalance = IERC20(details.signerToken).balanceOf(
       details.signerWallet
-    );
-    uint256 senderAllowance = IERC20(details.senderToken).allowance(
-      details.senderWallet,
-      light
     );
     uint256 signerAllowance = IERC20(details.signerToken).allowance(
       details.signerWallet,
       light
     );
 
-    if (senderAllowance < details.senderAmount) {
-      errors[errCount] = "SENDER_ALLOWANCE_LOW";
-      errCount++;
-    }
     if (signerAllowance < details.signerAmount + swapFee) {
       errors[errCount] = "SIGNER_ALLOWANCE_LOW";
       errCount++;
     }
-    if (senderBalance < details.senderAmount) {
-      errors[errCount] = "SENDER_BALANCE_LOW";
-      errCount++;
-    }
+
     if (signerBalance < details.signerAmount + swapFee) {
       errors[errCount] = "SIGNER_BALANCE_LOW";
       errCount++;
