@@ -1,7 +1,6 @@
 const { expect } = require('chai')
 const { ethers, waffle } = require('hardhat')
 const { deployMockContract } = waffle
-const lightContract = require('../build/contracts/Light.sol/Light.json')
 const IERC20 = require('@openzeppelin/contracts/build/contracts/IERC20.json')
 
 const {
@@ -71,11 +70,7 @@ describe('Validator', () => {
 
     stakingToken = await deployMockContract(deployer, IERC20.abi)
     const ValidatorFactory = await ethers.getContractFactory('Validator')
-    LightFactory = await ethers.getContractFactory(
-      lightContract.abi,
-      lightContract.bytecode,
-      deployer
-    )
+    LightFactory = await ethers.getContractFactory('Light')
     light = await LightFactory.deploy(
       feeWallet.address,
       SIGNER_FEE,
@@ -144,16 +139,6 @@ describe('Validator', () => {
         'SIGNER_ALLOWANCE_LOW'
       )
     })
-    it('properly detects a low sender allowance', async () => {
-      await setUpAllowances(0, DEFAULT_AMOUNT + SWAP_FEE)
-      await setUpBalances(DEFAULT_BALANCE, DEFAULT_BALANCE)
-      const order = await createSignedOrder({}, signer)
-      const [errCount, messages] = await getErrorInfo(order)
-      expect(errCount).to.equal(1)
-      expect(ethers.utils.parseBytes32String(messages[0])).to.equal(
-        'SENDER_ALLOWANCE_LOW'
-      )
-    })
     it('properly detects a low signer balance', async () => {
       await setUpAllowances(DEFAULT_AMOUNT, DEFAULT_AMOUNT + SWAP_FEE)
       await setUpBalances(DEFAULT_BALANCE, 0)
@@ -162,16 +147,6 @@ describe('Validator', () => {
       expect(errCount).to.equal(1)
       expect(ethers.utils.parseBytes32String(messages[0])).to.equal(
         'SIGNER_BALANCE_LOW'
-      )
-    })
-    it('properly detects a low sender balance', async () => {
-      await setUpAllowances(DEFAULT_AMOUNT, DEFAULT_AMOUNT + SWAP_FEE)
-      await setUpBalances(0, DEFAULT_BALANCE)
-      const order = await createSignedOrder({}, signer)
-      const [errCount, messages] = await getErrorInfo(order)
-      expect(errCount).to.equal(1)
-      expect(ethers.utils.parseBytes32String(messages[0])).to.equal(
-        'SENDER_BALANCE_LOW'
       )
     })
     it('properly detects a nonce that has already been used', async () => {
@@ -201,7 +176,7 @@ describe('Validator', () => {
     })
     it('can detect multiple errors', async () => {
       await setUpAllowances(DEFAULT_AMOUNT, DEFAULT_AMOUNT + SWAP_FEE)
-      await setUpBalances(0, DEFAULT_BALANCE)
+      await setUpBalances(DEFAULT_BALANCE, 0)
       const order = await createSignedOrder(
         {
           expiry: '0',
@@ -214,7 +189,7 @@ describe('Validator', () => {
         'EXPIRY_PASSED'
       )
       expect(ethers.utils.parseBytes32String(messages[1])).to.equal(
-        'SENDER_BALANCE_LOW'
+        'SIGNER_BALANCE_LOW'
       )
     })
   })
